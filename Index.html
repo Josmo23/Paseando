@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rasca y Gana - Tours Baja California</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background-color: #0c4a6e;
+            background-image: linear-gradient(135deg, #0c4a6e 10%, #1e40af 100%);
+            min-height: 100vh;
+        }
+        
+        .scratch-card {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            cursor: pointer;
+            perspective: 1000px;
+            transition: transform 0.3s;
+        }
+        
+        .scratch-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .scratch-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+        
+        .scratch-card.flipped .scratch-card-inner {
+            transform: rotateY(180deg);
+        }
+        
+        .scratch-card-front, .scratch-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        
+        .scratch-card-front {
+            background-color: #854d0e;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            border: 2px solid #fbbf24;
+        }
+        
+        .scratch-card-back {
+            background-color: #fef3c7;
+            transform: rotateY(180deg);
+            font-size: 36px;
+            border: 2px solid #fbbf24;
+        }
+        
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #f00;
+            animation: confetti-fall 3s ease-in-out forwards;
+            z-index: 1000;
+        }
+        
+        @keyframes confetti-fall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        
+        .neon-text {
+            text-shadow: 0 0 5px #fff, 
+                         0 0 10px #fff, 
+                         0 0 15px #0ff, 
+                         0 0 20px #0ff, 
+                         0 0 25px #0ff;
+            color: #fff;
+        }
+        
+        .neon-border {
+            box-shadow: 0 0 5px #fbbf24, 
+                        0 0 10px #fbbf24, 
+                        0 0 15px #f59e0b, 
+                        0 0 20px #f59e0b;
+        }
+        
+        .glow-button {
+            box-shadow: 0 0 10px #f59e0b;
+            animation: glow 1.5s infinite alternate;
+        }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 10px #f59e0b;
+            }
+            to {
+                box-shadow: 0 0 20px #fbbf24, 0 0 30px #f59e0b;
+            }
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(45deg, #854d0e, #b45309, #92400e, #1e40af);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        
+        .map-marker {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .map-marker:hover {
+            transform: scale(1.2);
+            filter: drop-shadow(0 0 5px #fbbf24);
+        }
+        
+        .map-tooltip {
+            position: absolute;
+            background-color: rgba(30, 64, 175, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+            border: 1px solid #fbbf24;
+            z-index: 10;
+            max-width: 200px;
+            box-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+        
+        .map-marker:hover + .map-tooltip {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-6xl mx-auto">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-amber-900/80 rounded-lg p-6 shadow-lg text-amber-100">
+                <h2 class="text-2xl font-bold text-yellow-300 mb-4">Nuestros Tours</h2>
+                <ul class="space-y-3">
+                    <li class="flex items-center">
+                        <span class="text-2xl mr-3">🌴</span>
+                        <span>Paseos en Barco</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="text-2xl mr-3">🐬</span>
+                        <span>Avistamiento de Ballenas</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="text-2xl mr-3">🍷</span>
+                        <span>Viñedos de Baja</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="text-2xl mr-3">🏖️</span>
+                        <span>Puerto Peñasco</span>
+                    </li>
+                    <li class="flex items-center">
+                        <span class="text-2xl mr-3">🌊</span>
+                        <span>Mulegé y Loreto</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="bg-blue-900/80 rounded-lg p-6 shadow-lg text-blue-100 relative">
+                <h2 class="text-2xl font-bold text-yellow-300 mb-4">Mapa de Baja California</h2>
+                <div class="relative w-full h-64 md:h-80">
+                    <svg viewBox="0 0 200 500" class="w-full h-full">
+                        <!-- Contorno de Baja California -->
+                        <path d="M50,10 L40,50 L30,80 L25,120 L20,160 L15,200 L20,240 L25,280 L30,320 L40,360 L50,400 L60,440 L70,460 L80,480 L90,490 L100,495 L110,490 L120,480 L130,460 L140,440 L150,400 L160,360 L170,320 L175,280 L180,240 L185,200 L180,160 L175,120 L170,80 L160,50 L150,10 Z" 
+                              fill="#f8fafc" stroke="#fbbf24" stroke-width="2" opacity="0.8"/>
+                        
+                        <!-- Mar de Cortés -->
+                        <path d="M185,200 L180,160 L175,120 L170,80 L160,50 L150,10 L200,10 L200,490 L100,495 L110,490 L120,480 L130,460 L140,440 L150,400 L160,360 L170,320 L175,280 L180,240 Z" 
+                              fill="#1e40af" opacity="0.5"/>
+                        
+                        <!-- Océano Pacífico -->
+                        <path d="M50,10 L40,50 L30,80 L25,120 L20,160 L15,200 L20,240 L25,280 L30,320 L40,360 L50,400 L60,440 L70,460 L80,480 L90,490 L100,495 L0,490 L0,10 Z" 
+                              fill="#0c4a6e" opacity="0.5"/>
+                        
+                        <!-- Marcadores de ubicaciones -->
+                        <!-- Tijuana -->
+                        <circle cx="50" cy="20" r="5" fill="#fbbf24" class="map-marker" data-location="Tijuana"/>
+                        <text x="50" y="20" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">TJ</text>
+                        <foreignObject x="60" y="10" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Tijuana</strong>
+                                <p>Punto de partida para muchos tours</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Ensenada -->
+                        <circle cx="45" cy="60" r="5" fill="#fbbf24" class="map-marker" data-location="Ensenada"/>
+                        <text x="45" y="60" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">EN</text>
+                        <foreignObject x="55" y="50" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Ensenada</strong>
+                                <p>Famosa por sus viñedos y paseos en barco</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Puerto Peñasco -->
+                        <circle cx="170" cy="80" r="5" fill="#fbbf24" class="map-marker" data-location="Puerto Peñasco"/>
+                        <text x="170" y="80" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">PP</text>
+                        <foreignObject x="120" y="70" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Puerto Peñasco</strong>
+                                <p>Hermosas playas y actividades acuáticas</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Mulegé -->
+                        <circle cx="160" cy="280" r="5" fill="#fbbf24" class="map-marker" data-location="Mulegé"/>
+                        <text x="160" y="280" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">MU</text>
+                        <foreignObject x="110" y="270" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Mulegé</strong>
+                                <p>Oasis en el desierto con hermosas bahías</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Loreto -->
+                        <circle cx="150" cy="320" r="5" fill="#fbbf24" class="map-marker" data-location="Loreto"/>
+                        <text x="150" y="320" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">LO</text>
+                        <foreignObject x="100" y="310" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Loreto</strong>
+                                <p>Avistamiento de ballenas y vida marina</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- La Paz -->
+                        <circle cx="120" cy="420" r="5" fill="#fbbf24" class="map-marker" data-location="La Paz"/>
+                        <text x="120" y="420" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">LP</text>
+                        <foreignObject x="70" y="410" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>La Paz</strong>
+                                <p>Capital de Baja California Sur</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Cabo San Lucas -->
+                        <circle cx="100" cy="480" r="5" fill="#fbbf24" class="map-marker" data-location="Cabo San Lucas"/>
+                        <text x="100" y="480" text-anchor="middle" fill="#fff" font-size="6" font-weight="bold">CS</text>
+                        <foreignObject x="50" y="470" width="100" height="40" class="map-tooltip">
+                            <div xmlns="http://www.w3.org/1999/xhtml" class="p-1">
+                                <strong>Cabo San Lucas</strong>
+                                <p>Destino turístico de clase mundial</p>
+                            </div>
+                        </foreignObject>
+                        
+                        <!-- Leyenda -->
+                        <text x="10" y="30" fill="#fbbf24" font-size="8" font-weight="bold">Océano Pacífico</text>
+                        <text x="140" y="30" fill="#fbbf24" font-size="8" font-weight="bold">Mar de Cortés</text>
+                    </svg>
+                </div>
+                <div class="mt-4 text-center text-sm text-amber-200">
+                    Pasa el cursor sobre los puntos para más información
+                </div>
+            </div>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+            <div class="bg-blue-900/80 rounded-lg p-6 shadow-lg text-blue-100">
+                <h2 class="text-2xl font-bold text-yellow-300 mb-4">Información</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">📍</span>
+                        <span>Múltiples ubicaciones</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">🚌</span>
+                        <span>Transporte incluido</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">🕒</span>
+                        <span>Horarios flexibles</span>
+                    </div>
+                    <div class="flex items-center">
+                        <span class="text-2xl mr-3">👥</span>
+                        <span>Guías expertos</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="welcome-screen" class="bg-gradient-to-r from-amber-800 to-amber-900 rounded-lg p-6 shadow-lg border-2 border-yellow-500 neon-border">
+                <h2 class="text-3xl font-bold text-yellow-300 mb-4 text-center">¡Juega y Gana!</h2>
+                <p class="mb-4 text-amber-100 text-center">Ingresa tus datos para comenzar a jugar:</p>
+                
+                <div class="mb-4">
+                    <label for="name" class="block text-sm font-medium text-yellow-200 mb-2">Nombre:</label>
+                    <input type="text" id="name" class="w-full px-4 py-2 bg-amber-100 border border-yellow-500 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-amber-900">
+                </div>
+                
+                <div class="mb-6">
+                    <label for="phone" class="block text-sm font-medium text-yellow-200 mb-2">Número de teléfono:</label>
+                    <input type="tel" id="phone" class="w-full px-4 py-2 bg-amber-100 border border-yellow-500 rounded-md focus:outline-none focus:ring-2 focus:ring-yellow-500 text-amber-900">
+                </div>
+                
+                <button id="start-game" class="w-full bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold py-3 px-4 rounded-md transition duration-300 glow-button">
+                    ¡Comenzar a jugar!
+                </button>
+            </div>
+        </div>
+        
+        <div id="game-screen" class="hidden">
+            <div class="bg-gradient-to-r from-blue-900 to-blue-800 rounded-lg p-8 shadow-lg max-w-md mx-auto mb-8 border-2 border-blue-400 neon-border">
+                <h2 class="text-3xl font-bold text-yellow-300 mb-4 text-center">¡Rasca 3 tarjetas!</h2>
+                <p class="mb-6 text-blue-100 text-center">Encuentra 3 símbolos iguales para ganar un premio.</p>
+                
+                <div class="grid grid-cols-3 gap-4 mb-8">
+                    <div class="scratch-card" data-index="0">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="1">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="2">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="3">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="4">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="5">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="6">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="7">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="scratch-card" data-index="8">
+                        <div class="scratch-card-inner">
+                            <div class="scratch-card-front">
+                                <span>?</span>
+                            </div>
+                            <div class="scratch-card-back">
+                                <span class="symbol"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="cards-flipped" class="text-center text-yellow-200 mb-4 text-lg">
+                    Tarjetas volteadas: 0/3
+                </div>
+            </div>
+        </div>
+        
+        <div id="result-screen" class="hidden">
+            <div class="gradient-bg rounded-lg p-8 shadow-lg max-w-md mx-auto text-center border-2 border-yellow-400 neon-border">
+                <div id="win-message" class="hidden">
+                    <div class="text-6xl mb-6">🎉</div>
+                    <h2 class="text-3xl font-bold text-yellow-300 mb-4 neon-text">¡Felicidades!</h2>
+                    <p class="mb-3 text-white text-xl"><span id="result-name" class="font-semibold"></span>, ¡has ganado!</p>
+                    <p class="mb-6 text-2xl">Tu premio es: <span id="prize" class="font-bold text-yellow-300"></span></p>
+                    <p class="text-sm mb-8 text-blue-100">Te contactaremos al número <span id="result-phone" class="font-semibold"></span> para coordinar la entrega de tu premio.</p>
+                </div>
+                
+                <div id="lose-message" class="hidden">
+                    <div class="text-6xl mb-6">😢</div>
+                    <h2 class="text-3xl font-bold text-yellow-300 mb-4">¡Lo sentimos!</h2>
+                    <p class="mb-4 text-white text-xl"><span id="result-name-lose" class="font-semibold"></span>, no has ganado esta vez.</p>
+                    <p class="mb-8 text-blue-100">¡Pero no te desanimes! Puedes intentarlo nuevamente.</p>
+                </div>
+                
+                <button id="play-again" class="bg-gradient-to-r from-yellow-500 to-amber-500 hover:from-yellow-600 hover:to-amber-600 text-white font-bold py-4 px-8 rounded-md transition duration-300 glow-button">
+                    Jugar de nuevo
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const gameScreen = document.getElementById('game-screen');
+            const resultScreen = document.getElementById('result-screen');
+            const startGameBtn = document.getElementById('start-game');
+            const playAgainBtn = document.getElementById('play-again');
+            const cardsFlippedCounter = document.getElementById('cards-flipped');
+            const scratchCards = document.querySelectorAll('.scratch-card');
+            
+            const symbols = ['🌴', '🏄', '🌊', '⛵', '🐬', '🐠'];
+            let flippedCards = 0;
+            let gameSymbols = [];
+            let playerName = '';
+            let playerPhone = '';
+            
+            // Premios disponibles
+            const prizes = [
+                { name: '50 pesos de descuento', probability: 0.4 },
+                { name: 'Viaje gratis', probability: 0.01 },
+                { name: 'Vino gratis', probability: 0.2 },
+                { name: 'Paseo en barco', probability: 0.2 },
+                { name: '100 pesos de descuento', probability: 0.19 }
+            ];
+            
+            // Iniciar juego
+            startGameBtn.addEventListener('click', function() {
+                playerName = document.getElementById('name').value.trim();
+                playerPhone = document.getElementById('phone').value.trim();
+                
+                if (!playerName || !playerPhone) {
+                    alert('Por favor, ingresa tu nombre y número de teléfono para comenzar.');
+                    return;
+                }
+                
+                welcomeScreen.classList.add('hidden');
+                gameScreen.classList.remove('hidden');
+                
+                setupGame();
+            });
+            
+            // Configurar juego
+            function setupGame() {
+                flippedCards = 0;
+                cardsFlippedCounter.textContent = `Tarjetas volteadas: ${flippedCards}/3`;
+                
+                // Resetear tarjetas
+                scratchCards.forEach(card => {
+                    card.classList.remove('flipped');
+                    card.querySelector('.scratch-card-back .symbol').textContent = '';
+                });
+                
+                // Determinar si el jugador ganará (10% de probabilidad)
+                const willWin = Math.random() < 0.1;
+                
+                // Seleccionar un símbolo ganador al azar
+                const winningSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                
+                // Crear arreglo de símbolos para el juego
+                gameSymbols = [];
+                
+                if (willWin) {
+                    // Si gana, colocar 3 símbolos iguales y el resto diferentes
+                    for (let i = 0; i < 9; i++) {
+                        if (i < 3) {
+                            gameSymbols.push(winningSymbol);
+                        } else {
+                            let randomSymbol;
+                            do {
+                                randomSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                            } while (randomSymbol === winningSymbol);
+                            gameSymbols.push(randomSymbol);
+                        }
+                    }
+                } else {
+                    // Si pierde, asegurarse de que no haya 3 símbolos iguales
+                    for (let i = 0; i < 9; i++) {
+                        gameSymbols.push(symbols[Math.floor(Math.random() * symbols.length)]);
+                    }
+                    
+                    // Verificar que no haya 3 símbolos iguales por casualidad
+                    let symbolCounts = {};
+                    symbols.forEach(symbol => {
+                        symbolCounts[symbol] = gameSymbols.filter(s => s === symbol).length;
+                    });
+                    
+                    // Si hay 3 o más de algún símbolo, reemplazar algunos
+                    for (let symbol in symbolCounts) {
+                        if (symbolCounts[symbol] >= 3) {
+                            // Reemplazar uno de los símbolos
+                            let count = 0;
+                            for (let i = 0; i < gameSymbols.length && count < 1; i++) {
+                                if (gameSymbols[i] === symbol) {
+                                    let newSymbol;
+                                    do {
+                                        newSymbol = symbols[Math.floor(Math.random() * symbols.length)];
+                                    } while (newSymbol === symbol);
+                                    gameSymbols[i] = newSymbol;
+                                    count++;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Mezclar los símbolos
+                shuffleArray(gameSymbols);
+                
+                // Habilitar las tarjetas
+                scratchCards.forEach(card => {
+                    card.style.pointerEvents = 'auto';
+                });
+            }
+            
+            // Manejar clic en tarjetas
+            scratchCards.forEach(card => {
+                card.addEventListener('click', function() {
+                    if (!this.classList.contains('flipped') && flippedCards < 3) {
+                        const index = parseInt(this.getAttribute('data-index'));
+                        this.classList.add('flipped');
+                        this.querySelector('.scratch-card-back .symbol').textContent = gameSymbols[index];
+                        
+                        flippedCards++;
+                        cardsFlippedCounter.textContent = `Tarjetas volteadas: ${flippedCards}/3`;
+                        
+                        if (flippedCards === 3) {
+                            setTimeout(checkResult, 1000);
+                        }
+                    }
+                });
+            });
+            
+            // Verificar resultado
+            function checkResult() {
+                const flippedSymbols = [];
+                document.querySelectorAll('.scratch-card.flipped .symbol').forEach(el => {
+                    flippedSymbols.push(el.textContent);
+                });
+                
+                // Contar ocurrencias de cada símbolo
+                const symbolCounts = {};
+                flippedSymbols.forEach(symbol => {
+                    symbolCounts[symbol] = (symbolCounts[symbol] || 0) + 1;
+                });
+                
+                // Verificar si hay 3 símbolos iguales
+                let hasWon = false;
+                for (let symbol in symbolCounts) {
+                    if (symbolCounts[symbol] === 3) {
+                        hasWon = true;
+                        break;
+                    }
+                }
+                
+                // Mostrar resultado
+                gameScreen.classList.add('hidden');
+                resultScreen.classList.remove('hidden');
+                
+                document.getElementById('result-name').textContent = playerName;
+                document.getElementById('result-name-lose').textContent = playerName;
+                document.getElementById('result-phone').textContent = playerPhone;
+                
+                if (hasWon) {
+                    // Seleccionar premio basado en probabilidades
+                    const prize = selectPrize();
+                    document.getElementById('prize').textContent = prize;
+                    document.getElementById('win-message').classList.remove('hidden');
+                    document.getElementById('lose-message').classList.add('hidden');
+                    
+                    // Mostrar confeti
+                    createConfetti();
+                } else {
+                    document.getElementById('win-message').classList.add('hidden');
+                    document.getElementById('lose-message').classList.remove('hidden');
+                }
+                
+                // Deshabilitar las tarjetas
+                scratchCards.forEach(card => {
+                    card.style.pointerEvents = 'none';
+                });
+            }
+            
+            // Seleccionar premio basado en probabilidades
+            function selectPrize() {
+                const rand = Math.random();
+                let cumulativeProbability = 0;
+                
+                for (let prize of prizes) {
+                    cumulativeProbability += prize.probability;
+                    if (rand < cumulativeProbability) {
+                        return prize.name;
+                    }
+                }
+                
+                // Por defecto, retornar el último premio
+                return prizes[prizes.length - 1].name;
+            }
+            
+            // Jugar de nuevo
+            playAgainBtn.addEventListener('click', function() {
+                resultScreen.classList.add('hidden');
+                welcomeScreen.classList.remove('hidden');
+                document.getElementById('name').value = playerName;
+                document.getElementById('phone').value = playerPhone;
+            });
+            
+            // Función para mezclar array
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+            
+            // Crear efecto de confeti
+            function createConfetti() {
+                const colors = ['#fbbf24', '#f59e0b', '#d97706', '#0284c7', '#0ea5e9', '#38bdf8'];
+                
+                for (let i = 0; i < 100; i++) {
+                    const confetti = document.createElement('div');
+                    confetti.className = 'confetti';
+                    confetti.style.left = Math.random() * 100 + 'vw';
+                    confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                    confetti.style.width = Math.random() * 10 + 5 + 'px';
+                    confetti.style.height = Math.random() * 10 + 5 + 'px';
+                    confetti.style.animationDuration = Math.random() * 2 + 2 + 's';
+                    document.body.appendChild(confetti);
+                    
+                    // Eliminar confeti después de la animación
+                    setTimeout(() => {
+                        confetti.remove();
+                    }, 3000);
+                }
+            }
+            
+            // Interactividad del mapa
+            const mapMarkers = document.querySelectorAll('.map-marker');
+            mapMarkers.forEach(marker => {
+                marker.addEventListener('mouseenter', function() {
+                    const location = this.getAttribute('data-location');
+                    console.log(`Mostrando información de: ${location}`);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
